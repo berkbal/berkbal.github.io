@@ -1,7 +1,6 @@
-       /* Sayfanın arka planı siyah */
        body {
         background-color:#121212;
-        backdrop-filter: blur(20px); /* Blur efekti */
+        backdrop-filter: blur(20px);
     }
 
     /* Terminal kutusu sabit boyut */
@@ -12,8 +11,8 @@
         border-radius: 8px;
         font-family: 'Courier New', Courier, monospace;
         box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5);
-        overflow-y: auto; /* İçerik sığmazsa kaydırma çubuğu ekler */
-        height: 500px; /* Sabit yüksekliği artırdım */
+        overflow-y: auto;
+        height: 500px;
         max-width: 100%;
     }
 
@@ -42,7 +41,9 @@
     }
     .close {
         background-color: #e06c75;
+        
     }
+
     .minimize {
         background-color: #e5c07b;
     }
