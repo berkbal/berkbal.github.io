@@ -3,7 +3,7 @@ name: Docker Build and Publish
 on:
   push:
     branches:
-      - main  # Sadece Main'i build et
+      - master  # Sadece master'i build et
 
 jobs:
   build:
