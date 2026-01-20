@@ -22,8 +22,10 @@ jobs:
           password: ${{ secrets.CR_PAT }}  # Secret
 
       - name: Build Docker image
-        run: docker build -t ghcr.io/berkbal/berkbal.github.io:latest .
+        run: docker build -t ghcr.io/berkbal/berkbal.github.io:latest -t ghcr.io/berkbal/berkbal.github.io:${{ github.sha }} .
 
       - name: Push Docker image to GitHub Container Registry
-        run: docker push ghcr.io/berkbal/berkbal.github.io:latest
+        run: |
+          docker push ghcr.io/berkbal/berkbal.github.io:latest
+          docker push ghcr.io/berkbal/berkbal.github.io:${{ github.sha }}
 
