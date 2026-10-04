@@ -1,68 +1,446 @@
-       body {
-        background-color:#121212;
-        backdrop-filter: blur(20px);
-    }
+/* JetBrains Mono, SIL Open Font License 1.1 (assets/fonts/OFL.txt) */
+@font-face {
+    font-family: "JetBrains Mono";
+    src: url("assets/fonts/jetbrains-mono-latin-wght.woff2") format("woff2");
+    font-weight: 100 800;
+    font-style: normal;
+    font-display: swap;
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
 
-    /* Terminal kutusu sabit boyut */
-    .terminal-box {
-        background-color: #2d2d2d;
-        color: #00ff00;
-        padding: 20px;
-        border-radius: 8px;
-        font-family: 'Courier New', Courier, monospace;
-        box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5);
-        overflow-y: auto;
-        height: 500px;
-        max-width: 100%;
-    }
+/* Dark only on purpose: the brand is a terminal. */
+:root {
+    color-scheme: dark;
 
-    /* Terminal başlığı */
-    .terminal-header {
-        background-color: #1a1a1a;
-        padding: 10px;
-        color: #fff;
-        border-radius: 8px 8px 0 0;
-        text-align: left;
-        font-size: 14px;
-        position: relative;
-    }
-    .terminal-header .buttons {
-        position: absolute;
-        right: 10px;
-        top: 50%;
-        transform: translateY(-50%);
-    }
-    .terminal-header .buttons span {
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-        display: inline-block;
-        margin-left: 8px;
-    }
-    .close {
-        background-color: #e06c75;
-        
-    }
+    --canvas: #0b0d0c;
+    --surface: #121513;
+    --surface-bar: #1a1e1b;
+    --ink: #e4e9e5;
+    --ink-soft: #8e9a92;
+    --accent: #86df9f;          /* phosphor green, the one accent */
+    --accent-ink: #0b130e;
 
-    .minimize {
-        background-color: #e5c07b;
-    }
-    .maximize {
-        background-color: #98c379;
-    }
-    .hostname {
-        color: #fff;
-    }
+    --bash-green: #8ae234;      /* Tango bright green, bold PS1 user@host */
+    --bash-blue: #729fcf;       /* Tango bright blue, bold PS1 path */
 
-    hr {
-        border-color: #555;
-    }
+    --edge: inset 0 1px 0 rgb(255 255 255 / 0.06);
+    --line: rgb(255 255 255 / 0.07);
+    --shadow-win: 0 2px 4px rgb(3 6 4 / 0.4), 0 24px 64px -12px rgb(3 6 4 / 0.75);
 
-    .footer {
-        color: #00ff00;
-        font-family: 'Courier New', Courier, monospace;
-    }
+    /* Radius rule: windows and dock 12px, dock tiles 10px, controls round. */
+    --r-win: 12px;
+    --r-tile: 10px;
 
-    a:hover {
-        color: yellow;
-      }
+    --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+    --dock-h: 84px;
+    --gutter: clamp(16px, 3vw, 32px);
+
+    --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --font-ui: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+    margin: 0;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    padding: var(--gutter) 0 max(12px, env(safe-area-inset-bottom));
+    background: var(--canvas);
+    color: var(--ink);
+    font-family: var(--font-mono);
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+}
+
+::selection { background: var(--accent); color: var(--accent-ink); }
+
+:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+}
+
+/* ---------------------------------------------------------------- desk -- */
+
+.desk {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+/* Light plane, oversized so pointer drift never exposes an edge. */
+.desk-light {
+    position: absolute;
+    inset: -10%;
+    background:
+        radial-gradient(60% 50% at 28% 18%, rgb(134 223 159 / 0.09), transparent 70%),
+        radial-gradient(50% 45% at 82% 88%, rgb(96 120 150 / 0.12), transparent 70%);
+    transform: translate3d(var(--lx, 0px), var(--ly, 0px), 0);
+    will-change: transform;
+}
+
+/* Grain keeps the dark ground from banding. Fixed, never on a scroller. */
+.desk::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    opacity: 0.05;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* --------------------------------------------------------------- stage -- */
+
+.stage {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    width: 100%;
+    /* Fixed height so the dock does not jump when the window closes or minimizes. */
+    height: min(560px, calc(100dvh - var(--dock-h) - 16px - var(--gutter) - 12px));
+    padding: 0 var(--gutter);
+}
+
+/* -------------------------------------------------------------- window -- */
+
+.win {
+    view-transition-name: term;
+    display: flex;
+    flex-direction: column;
+    width: min(880px, 100%);
+    height: 100%;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--r-win);
+    box-shadow: var(--edge), var(--shadow-win);
+    overflow: hidden;
+}
+
+.win[hidden] { display: none; }
+
+.win.is-max {
+    position: fixed;
+    inset: 12px 12px auto;
+    width: auto;
+    /* --dock-top is measured by main.js: the window stops 12px above the dock. */
+    height: calc(var(--dock-top, 100dvh) - 24px);
+    z-index: 2;
+}
+
+.win-bar {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    min-height: 46px;
+    padding: 0 8px;
+    background: var(--surface-bar);
+    border-bottom: 1px solid var(--line);
+    box-shadow: var(--edge);
+    user-select: none;
+}
+
+.win-title {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font: 700 13.5px/1 var(--font-ui);
+    color: var(--ink-soft);
+    white-space: nowrap;
+    pointer-events: none;
+    transition: color 160ms var(--ease-out);
+}
+
+.win:focus-within .win-title { color: var(--ink); }
+
+/* GNOME order: minimize, maximize, close, all on the right. */
+.win-controls { display: flex; gap: 10px; }
+
+.win-btn {
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: rgb(255 255 255 / 0.1);
+    color: var(--ink);
+    cursor: pointer;
+    transition: background-color 120ms var(--ease-out), transform 100ms var(--ease-out);
+}
+
+.win-btn svg { width: 10px; height: 10px; fill: currentColor; }
+.win-btn:hover { background: rgb(255 255 255 / 0.17); }
+.win-btn:active { background: rgb(255 255 255 / 0.24); transform: scale(0.94); }
+.win-btn:focus-visible { outline-offset: 2px; }
+
+.win-btn .glyph-in { display: none; }
+.win.is-max .win-btn .glyph-in { display: block; }
+.win.is-max .win-btn .glyph-out { display: none; }
+
+
+/* -------------------------------------------------------------- screen -- */
+
+.screen {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 20px 24px 24px;
+    font-size: 14.5px;
+    line-height: 1.7;
+    letter-spacing: 0.005em;
+    cursor: text;
+    scrollbar-width: thin;
+    scrollbar-color: rgb(255 255 255 / 0.14) transparent;
+}
+
+/* With JS the static bio is hidden until main.js re-types it, so it never flashes. */
+.js .log:not(.live) { visibility: hidden; }
+
+.log p,
+.log pre {
+    margin: 0 0 1em;
+    max-width: 78ch;
+    text-wrap: pretty;
+}
+
+.log .cmd-line { margin-bottom: 0.35em; }
+
+.ps1 { color: var(--ink); font-weight: 700; white-space: nowrap; }
+.ps1-user { color: var(--bash-green); }
+.ps1-path { color: var(--bash-blue); }
+.cmd { color: var(--ink); }
+.out { color: var(--accent); }
+.dim { color: var(--ink-soft); }
+
+.out a {
+    color: var(--accent);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+    text-decoration-color: rgb(134 223 159 / 0.45);
+    transition: text-decoration-color 140ms var(--ease-out);
+}
+
+.out a:hover { text-decoration-color: var(--accent); }
+
+/* Commands printed by `help` run when clicked, for visitors without a keyboard. */
+.run {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--accent);
+    font: inherit;
+    cursor: pointer;
+    text-decoration: underline dotted rgb(134 223 159 / 0.5);
+    text-underline-offset: 4px;
+}
+
+.run:hover { text-decoration-style: solid; }
+
+.log .link-line { margin-bottom: 0.15em; }
+.log .link-line + :not(.link-line) { margin-top: 0.85em; }
+
+.help-row { display: flex; flex-wrap: wrap; gap: 0.4em 2.2ch; }
+
+.prompt {
+    display: flex;
+    align-items: baseline;
+    gap: 1ch;
+    margin: 0;
+}
+
+.prompt[hidden] { display: none; }
+
+.prompt input {
+    flex: 1;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    outline: 0;
+    background: none;
+    color: var(--ink);
+    caret-color: var(--ink);
+    font: inherit;
+    letter-spacing: inherit;
+}
+
+.prompt input::placeholder { color: rgb(142 154 146 / 0.55); }
+
+/* Typing cursor while output is being printed. */
+.typing::after {
+    content: "";
+    display: inline-block;
+    width: 0.6em;
+    height: 1.1em;
+    margin-left: 1px;
+    vertical-align: -0.2em;
+    background: var(--accent);
+}
+
+/* ---------------------------------------------------------------- dock -- */
+
+.dock {
+    position: relative;
+    z-index: 3;
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    flex: none;
+    margin: 0 var(--gutter);
+    padding: 8px 10px 6px;
+    background: rgb(26 30 27 / 0.72);
+    border: 1px solid var(--line);
+    border-radius: var(--r-win);
+    box-shadow: var(--edge), 0 12px 32px -8px rgb(3 6 4 / 0.6);
+    backdrop-filter: blur(16px) saturate(140%);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+    .dock { background: var(--surface-bar); backdrop-filter: none; -webkit-backdrop-filter: none; }
+}
+
+.dock-sep {
+    align-self: stretch;
+    width: 1px;
+    margin: 4px 4px 22px;
+    background: var(--line);
+}
+
+.dock-item {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 11px;
+    width: 84px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--r-tile);
+    background: none;
+    color: var(--ink);
+    text-decoration: none;
+    cursor: pointer;
+    font: inherit;
+}
+
+.dock-icon {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: var(--r-tile);
+    background: linear-gradient(180deg, #232825, #181b19);
+    border: 1px solid var(--line);
+    box-shadow: var(--edge), 0 4px 10px -4px rgb(3 6 4 / 0.7);
+    transition: transform 160ms var(--ease-out);
+}
+
+.dock-icon svg { width: 24px; height: 24px; fill: var(--ink); }
+.dock-app .dock-icon svg { fill: var(--accent); }
+
+.dock-label {
+    font: 500 11.5px/1.25 var(--font-ui);
+    color: var(--ink-soft);
+    text-align: center;
+    transition: color 160ms var(--ease-out);
+}
+
+/* Running indicator: real state, shown only while a session exists. */
+.dock-app::after {
+    content: "";
+    position: absolute;
+    top: 49px;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--ink-soft);
+    opacity: 0;
+    transition: opacity 160ms var(--ease-out);
+}
+
+.dock-app.is-running::after { opacity: 1; }
+.dock-app.is-target .dock-icon { view-transition-name: term; }
+
+@media (hover: hover) and (pointer: fine) {
+    .dock-item:hover .dock-icon { transform: translateY(-4px); }
+    .dock-item:hover .dock-label { color: var(--ink); }
+}
+
+.dock-item:active .dock-icon { transform: translateY(-1px) scale(0.96); }
+.dock-item:focus-visible { outline-offset: 2px; }
+
+/* Asks for attention once after the window closes. */
+.dock-app.is-calling .dock-icon { animation: call 900ms var(--ease-out) 1; }
+
+@keyframes call {
+    0%, 100% { transform: translateY(0); }
+    25% { transform: translateY(-12px); }
+    50% { transform: translateY(0); }
+    70% { transform: translateY(-5px); }
+}
+
+/* ---------------------------------------------------- view transitions -- */
+
+::view-transition-old(root),
+::view-transition-new(root) { animation: none; }
+
+::view-transition-group(term) {
+    animation-duration: 340ms;
+    animation-timing-function: var(--ease-out);
+}
+
+::view-transition-old(term):only-child { animation: win-out 200ms var(--ease-out) both; }
+::view-transition-new(term):only-child { animation: win-in 240ms var(--ease-out) both; }
+
+@keyframes win-out { to { opacity: 0; transform: scale(0.96); } }
+@keyframes win-in { from { opacity: 0; transform: scale(0.96); } }
+
+/* -------------------------------------------------------------- mobile -- */
+
+@media (max-width: 640px) {
+    :root { --dock-h: 78px; }
+
+    body { gap: 12px; padding-top: 16px; }
+    .stage { padding: 0 16px; height: calc(100dvh - var(--dock-h) - 12px - 16px - 12px); }
+    .stage { padding: 16px 16px 10px; }
+    .win { height: 100%; }
+    .win.is-max { inset: 8px 8px auto; height: calc(var(--dock-top, 100dvh) - 16px); }
+    .screen { padding: 16px; font-size: 13px; line-height: 1.65; }
+    .win-title { display: none; }
+
+    .dock { gap: 2px; padding: 8px 6px 6px; margin-inline: 16px; }
+    .dock-item { width: 74px; }
+    .dock-icon { width: 40px; height: 40px; }
+    .dock-icon svg { width: 22px; height: 22px; }
+    .dock-label { font-size: 10.5px; }
+    .dock-item { gap: 10px; }
+    .dock-app::after { top: 44.5px; }
+    .dock-sep { margin-inline: 2px; }
+}
+
+@media (pointer: coarse) {
+    .win-btn { width: 32px; height: 32px; }
+    .win-btn svg { width: 12px; height: 12px; }
+}
+
+/* Fewer and gentler, not zero. */
+@media (prefers-reduced-motion: reduce) {
+    .desk-light { transform: none; }
+    .dock-app.is-calling .dock-icon { animation: none; }
+    .dock-item:hover .dock-icon { transform: none; }
+    ::view-transition-group(*),
+    ::view-transition-old(*),
+    ::view-transition-new(*) { animation: none !important; }
+}

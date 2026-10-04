@@ -1,113 +1,88 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Berk Bal</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" type="text/css" href="style.css">
+    <meta name="description" content="Berk Bal, Linux System Administrator. CI/CD pipelines, automation, networking, virtualization, Kubernetes and Ansible.">
+    <meta name="theme-color" content="#0b0d0c">
+    <meta property="og:title" content="Berk Bal">
+    <meta property="og:description" content="Linux System Administrator with a strong passion for open-source software.">
+    <meta property="og:type" content="website">
     <link rel="icon" href="favicon.ico" type="image/x-icon">
-    <style>
- 
-    </style>
+    <link rel="preload" href="assets/fonts/jetbrains-mono-latin-wght.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="style.css">
+    <script>document.documentElement.classList.add("js")</script>
 </head>
-<body class="d-flex flex-column justify-content-center align-items-center vh-100">
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-md-8">
-                <div class="terminal-box">
-                    <div class="terminal-header d-flex align-items-center">
-                        <div class="buttons">
-                            <span class="close"></span>
-                            <span class="minimize"></span>
-                            <span class="maximize"></span>
-                        </div>
-                        
-                        <span>root@berkbal.com</span>
-                    </div>
-                    <div class="terminal-content">
-                        <hr>
-                        <p id="typewriter"><span class="hostname">root@berkbal.com:~#</span> </p>
-                        <p id="content"></p>
-                        <p id="content2"></p>
-                        <p id="content3"></p>
-                    </div>
+<body>
+    <!-- Wallpaper: a light plane that follows the pointer, plus grain. Decorative only. -->
+    <div class="desk" aria-hidden="true">
+        <div class="desk-light"></div>
+    </div>
+
+    <main class="stage">
+        <section class="win" id="term" aria-label="Terminal, root@berkbal.com">
+            <header class="win-bar" id="win-bar">
+                <span class="win-title">root@berkbal.com</span>
+                <div class="win-controls">
+                    <!-- GNOME-style window controls. Glyphs: Phosphor Icons (bold), MIT licence -->
+                    <button type="button" class="win-btn" data-action="minimize" aria-label="Minimize terminal">
+                        <svg viewBox="0 0 256 256" aria-hidden="true"><path d="M228,128a12,12,0,0,1-12,12H40a12,12,0,0,1,0-24H216A12,12,0,0,1,228,128Z"/></svg>
+                    </button>
+                    <button type="button" class="win-btn" data-action="maximize" aria-label="Maximize terminal" aria-pressed="false">
+                        <svg class="glyph-out" viewBox="0 0 256 256" aria-hidden="true"><path d="M208,28H48A20,20,0,0,0,28,48V208a20,20,0,0,0,20,20H208a20,20,0,0,0,20-20V48A20,20,0,0,0,208,28Zm-4,176H52V52H204Z"/></svg>
+                        <svg class="glyph-in" viewBox="0 0 256 256" aria-hidden="true"><path d="M216,28H88A12,12,0,0,0,76,40V76H40A12,12,0,0,0,28,88V216a12,12,0,0,0,12,12H168a12,12,0,0,0,12-12V180h36a12,12,0,0,0,12-12V40A12,12,0,0,0,216,28ZM156,204H52V100H156Zm48-48H180V88a12,12,0,0,0-12-12H100V52H204Z"/></svg>
+                    </button>
+                    <button type="button" class="win-btn win-btn--close" data-action="close" aria-label="Close terminal">
+                        <svg viewBox="0 0 256 256" aria-hidden="true"><path d="M208.49,191.51a12,12,0,0,1-17,17L128,145,64.49,208.49a12,12,0,0,1-17-17L111,128,47.51,64.49a12,12,0,0,1,17-17L128,111l63.51-63.52a12,12,0,0,1,17,17L145,128Z"/></svg>
+                    </button>
                 </div>
+            </header>
+
+            <div class="screen" id="screen">
+                <!-- The bio lives in the markup so it reads without JavaScript; main.js types it out. -->
+                <div class="log" id="log" role="log">
+                    <p class="cmd-line"><span class="ps1"><span class="ps1-user">root@berkbal.com</span>:<span class="ps1-path">~</span>#</span> <span class="cmd">whoami</span></p>
+                    <p class="out" data-bio>Hi, I'm Berk, a Linux System Administrator with a strong passion for open-source software. I have extensive experience in CI/CD pipelines, automation, networking, virtualization(KVM, Proxmox, Vmware, Vmware Cloud Director), IT management, containerization, tools like Kubernetes and Ansible. I focus on creating automation solutions that ensure systems operate smoothly, efficiently, and securely, while also developing bots for various other tasks.</p>
+                    <p class="out" data-bio>I am always exploring new technologies and continuously strive to optimize system administration processes. My commitment to open-source software is reflected in both my professional and personal projects.</p>
+                    <p class="out" data-bio>You can check out my GitHub profile to explore my projects, or visit my GitHub Pages where I regularly share documents and insights about Linux System Administration. Links are down below.</p>
+                </div>
+                <form class="prompt" id="prompt" hidden>
+                    <label class="ps1" for="cmd"><span class="ps1-user">root@berkbal.com</span>:<span class="ps1-path">~</span>#</label>
+                    <input id="cmd" name="cmd" type="text" placeholder="help" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="send">
+                </form>
             </div>
-        </div>
-    </div>
-    </div>
-    <div class="position-absolute top-100 start-0 translate-middle"></div>
-    <hr>
-    <div class="footer">
-        <p><a href="https://www.linkedin.com/in/ben-berkbal/">Linkedin</a> | <a href="https://github.com/berkbal">GitHub Profile</a> | <a href="https://berkbal.github.io/docs/">Docs for Sysadmins</a></p>
-    </div>
-    
-    </div>
-    
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        </section>
+    </main>
 
-    
-    <script>
-        const text1 = `whoami`;
-        let index1 = 0;
-        const speed1 = 500; 
+    <nav class="dock" aria-label="Links">
+        <button type="button" class="dock-item dock-app is-running" id="dock-term" aria-label="Terminal">
+            <span class="dock-icon">
+                <svg viewBox="0 0 256 256" aria-hidden="true"><path d="M128,128a8,8,0,0,1-3,6.25l-40,32a8,8,0,1,1-10-12.5L107.19,128,75,102.25a8,8,0,1,1,10-12.5l40,32A8,8,0,0,1,128,128Zm48,24H136a8,8,0,0,0,0,16h40a8,8,0,0,0,0-16Zm56-96V200a16,16,0,0,1-16,16H40a16,16,0,0,1-16-16V56A16,16,0,0,1,40,40H216A16,16,0,0,1,232,56ZM216,200V56H40V200H216Z"/></svg>
+            </span>
+            <span class="dock-label">Terminal</span>
+        </button>
+        <span class="dock-sep" aria-hidden="true"></span>
+        <a class="dock-item" href="https://www.linkedin.com/in/ben-berkbal/" target="_blank" rel="noopener noreferrer">
+            <span class="dock-icon">
+                <svg viewBox="0 0 256 256" aria-hidden="true"><path d="M216,24H40A16,16,0,0,0,24,40V216a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V40A16,16,0,0,0,216,24Zm0,192H40V40H216V216ZM96,112v64a8,8,0,0,1-16,0V112a8,8,0,0,1,16,0Zm88,28v36a8,8,0,0,1-16,0V140a20,20,0,0,0-40,0v36a8,8,0,0,1-16,0V112a8,8,0,0,1,15.79-1.78A36,36,0,0,1,184,140ZM100,84A12,12,0,1,1,88,72,12,12,0,0,1,100,84Z"/></svg>
+            </span>
+            <span class="dock-label">Linkedin</span>
+        </a>
+        <a class="dock-item" href="https://github.com/berkbal" target="_blank" rel="noopener noreferrer">
+            <span class="dock-icon">
+                <svg viewBox="0 0 256 256" aria-hidden="true"><path d="M208.31,75.68A59.78,59.78,0,0,0,202.93,28,8,8,0,0,0,196,24a59.75,59.75,0,0,0-48,24H124A59.75,59.75,0,0,0,76,24a8,8,0,0,0-6.93,4,59.78,59.78,0,0,0-5.38,47.68A58.14,58.14,0,0,0,56,104v8a56.06,56.06,0,0,0,48.44,55.47A39.8,39.8,0,0,0,96,192v8H72a24,24,0,0,1-24-24A40,40,0,0,0,8,136a8,8,0,0,0,0,16,24,24,0,0,1,24,24,40,40,0,0,0,40,40H96v16a8,8,0,0,0,16,0V192a24,24,0,0,1,48,0v40a8,8,0,0,0,16,0V192a39.8,39.8,0,0,0-8.44-24.53A56.06,56.06,0,0,0,216,112v-8A58.14,58.14,0,0,0,208.31,75.68ZM200,112a40,40,0,0,1-40,40H112a40,40,0,0,1-40-40v-8a41.74,41.74,0,0,1,6.9-22.48A8,8,0,0,0,80,73.83a43.81,43.81,0,0,1,.79-33.58,43.88,43.88,0,0,1,32.32,20.06A8,8,0,0,0,119.82,64h32.35a8,8,0,0,0,6.74-3.69,43.87,43.87,0,0,1,32.32-20.06A43.81,43.81,0,0,1,192,73.83a8.09,8.09,0,0,0,1,7.65A41.72,41.72,0,0,1,200,104Z"/></svg>
+            </span>
+            <span class="dock-label">GitHub Profile</span>
+        </a>
+        <a class="dock-item" href="https://berkbal.github.io/docs/" target="_blank" rel="noopener noreferrer">
+            <span class="dock-icon">
+                <svg viewBox="0 0 256 256" aria-hidden="true"><path d="M232,48H160a40,40,0,0,0-32,16A40,40,0,0,0,96,48H24a8,8,0,0,0-8,8V200a8,8,0,0,0,8,8H96a24,24,0,0,1,24,24,8,8,0,0,0,16,0,24,24,0,0,1,24-24h72a8,8,0,0,0,8-8V56A8,8,0,0,0,232,48ZM96,192H32V64H96a24,24,0,0,1,24,24V200A39.81,39.81,0,0,0,96,192Zm128,0H160a39.81,39.81,0,0,0-24,8V88a24,24,0,0,1,24-24h64ZM160,88h40a8,8,0,0,1,0,16H160a8,8,0,0,1,0-16Zm48,40a8,8,0,0,1-8,8H160a8,8,0,0,1,0-16h40A8,8,0,0,1,208,128Zm0,32a8,8,0,0,1-8,8H160a8,8,0,0,1,0-16h40A8,8,0,0,1,208,160Z"/></svg>
+            </span>
+            <span class="dock-label">Docs for Sysadmins</span>
+        </a>
+    </nav>
 
-        const text2 = `Hi, I'm Berk, a Linux System Administrator with a strong passion for open-source software. I have extensive experience in CI/CD pipelines, automation, networking, virtualization(KVM, Proxmox, Vmware, Vmware Cloud Director), IT management, containerization, tools like Kubernetes and Ansible. I focus on creating automation solutions that ensure systems operate smoothly, efficiently, and securely, while also developing bots for various other tasks.`;
-        let index2 = 0;
-        const speed2 = 5; 
-
-        const text3 = `I am always exploring new technologies and continuously strive to optimize system administration processes. My commitment to open-source software is reflected in both my professional and personal projects.`;
-        let index3 = 0;
-        const speed3 = 5;
-
-        const text4 = `You can check out my GitHub profile to explore my projects, or visit my GitHub Pages where I regularly share documents and insights about Linux System Administration. Links are down below.`;
-        let index4 = 0;
-        const speed4 = 5;
-
-        function typeWriter1() {
-            if (index1 < text1.length) {
-                document.getElementById("typewriter").innerHTML += text1.charAt(index1);
-                index1++;
-                setTimeout(typeWriter1, speed1);
-            } else {
-                setTimeout(typeWriter2, 500);
-            }
-        }
-
-        function typeWriter2() {
-            if (index2 < text2.length) {
-                document.getElementById("content").innerHTML += text2.charAt(index2);
-                index2++;
-                setTimeout(typeWriter2, speed2);
-            } else {
-                setTimeout(typeWriter3, 500);
-            }
-        }
-
-        function typeWriter3() {
-            if (index3 < text3.length) {
-                document.getElementById("content2").innerHTML += text3.charAt(index3);
-                index3++;
-                setTimeout(typeWriter3, speed3);
-            } else {
-                setTimeout(typeWriter4, 500);
-            }
-        }
-
-        function typeWriter4() {
-            if (index4 < text4.length) {
-                document.getElementById("content3").innerHTML += text4.charAt(index4);
-                index4++;
-                setTimeout(typeWriter4, speed4);
-            }
-        }
-
-        window.onload = function() {
-            typeWriter1();
-        };
-    </script>
+    <script src="main.js" defer></script>
 </body>
 </html>
