@@ -412,8 +412,9 @@ body {
 @media (max-width: 640px) {
     :root { --dock-h: 78px; }
 
-    body { gap: 12px; padding-top: 16px; }
-    .stage { padding: 0 16px; height: calc(100dvh - var(--dock-h) - 12px - 16px - 12px); }
+    /* The window takes whatever the dock leaves, so a two-line dock label never pushes it off screen. */
+    body { gap: 12px; padding-top: 16px; justify-content: flex-start; }
+    .stage { padding: 0 16px; flex: 1 1 0; min-height: 0; height: auto; }
     .stage { padding: 16px 16px 10px; }
     .win { height: 100%; }
     .win.is-max { inset: 8px 8px auto; height: calc(var(--dock-top, 100dvh) - 16px); }
@@ -428,6 +429,12 @@ body {
     .dock-item { gap: 10px; }
     .dock-app::after { top: 44.5px; }
     .dock-sep { margin-inline: 2px; }
+}
+
+@media (max-width: 359px) {
+    .dock { padding-inline: 4px; }
+    .dock-item { width: 64px; }
+    .dock-label { font-size: 10px; }
 }
 
 @media (pointer: coarse) {
