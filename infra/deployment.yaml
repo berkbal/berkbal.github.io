@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: berkbal-static
+  namespace: berkbal
   labels:
     app: berkbal-static
 spec:
@@ -17,8 +18,9 @@ spec:
     spec:
       containers:
         - name: berkbal-github-io
-          # Etiket kustomization.yaml'daki images: alanindan gelir (CI sha yazar).
-          image: ghcr.io/berkbal/berkbal.github.io
+          # Etiketi CI her master build'inde commit sha'si ile gunceller (sed).
+          # Elle degistirme; Argo bu satirin degismesini gorup deploy eder.
+          image: ghcr.io/berkbal/berkbal.github.io:02c89e31dd9cdcaf95f73dcf0b248966985edb2d
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
