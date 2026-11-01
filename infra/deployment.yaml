@@ -23,15 +23,17 @@ spec:
           ports:
             - name: http
               containerPort: 80
+            - name: health
+              containerPort: 8081
           readinessProbe:
             httpGet:
               path: /healthz
-              port: http
+              port: health
             periodSeconds: 10
           livenessProbe:
             httpGet:
               path: /healthz
-              port: http
+              port: health
             initialDelaySeconds: 5
             periodSeconds: 20
           resources:

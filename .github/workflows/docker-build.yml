@@ -9,7 +9,6 @@ on:
     # (infra/nginx/** imaja girdigi icin listede YOK)
     paths-ignore:
       - "infra/*.yaml"
-      - "infra/argocd/**"
       - "README.md"
 
 permissions:
