@@ -1,0 +1,23 @@
+# Argo CD Application — cluster'a bir kez elle uygulanir:
+#   kubectl apply -n argocd -f infra/argocd/application.yaml
+# Kustomization'a dahil DEGIL (Argo kendi Application'ini yonetmesin).
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: berkbal
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/berkbal/berkbal.github.io.git
+    targetRevision: master
+    path: infra
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: berkbal
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: berkbal-static
+  labels:
+    app: berkbal-static
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: berkbal-static
+  template:
+    metadata:
+      labels:
+        app: berkbal-static
+    spec:
+      containers:
+        - name: berkbal-github-io
+          # Etiket kustomization.yaml'daki images: alanindan gelir (CI sha yazar).
+          image: ghcr.io/berkbal/berkbal.github.io
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 80
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 50m
+              memory: 32Mi
+            limits:
+              cpu: 500m
+              memory: 128Mi
