@@ -14,4 +14,4 @@ resources:
 images:
 - name: ghcr.io/berkbal/berkbal.github.io
   newName: ghcr.io/berkbal/berkbal.github.io
-  newTag: 720fe5424eb13bbba81194e264e6aa8e06f38ddb
+  newTag: 02c89e31dd9cdcaf95f73dcf0b248966985edb2d
