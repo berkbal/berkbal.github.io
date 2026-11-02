@@ -10,6 +10,36 @@ spec:
   hostnames:
     - berkbal.com
   rules:
+    # Umami tracker (first-party): only the script and the collect endpoint
+    - matches:
+        - path:
+            type: Exact
+            value: /stats/script.js
+      filters:
+        - type: URLRewrite
+          urlRewrite:
+            path:
+              type: ReplaceFullPath
+              replaceFullPath: /script.js
+      backendRefs:
+        - name: umami
+          namespace: umami
+          port: 3000
+    - matches:
+        - path:
+            type: Exact
+            value: /stats/api/send
+          method: POST
+      filters:
+        - type: URLRewrite
+          urlRewrite:
+            path:
+              type: ReplaceFullPath
+              replaceFullPath: /api/send
+      backendRefs:
+        - name: umami
+          namespace: umami
+          port: 3000
     - matches:
         - path:
             type: PathPrefix
