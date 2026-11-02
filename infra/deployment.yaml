@@ -20,7 +20,7 @@ spec:
         - name: berkbal-github-io
           # Etiketi CI her master build'inde commit sha'si ile gunceller (sed).
           # Elle degistirme; Argo bu satirin degismesini gorup deploy eder.
-          image: ghcr.io/berkbal/berkbal.github.io:5c49449cbbee88931d9eb853ddf97838e30b99dd
+          image: ghcr.io/berkbal/berkbal.github.io:848083f5421d448b7226532357ca6c3d5d72fc01
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
