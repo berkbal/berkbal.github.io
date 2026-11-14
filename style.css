@@ -391,6 +391,35 @@ body {
     70% { transform: translateY(-5px); }
 }
 
+/* -------------------------------------------------------------- rm -rf -- */
+
+.log .rm-line { margin-bottom: 0; }
+
+/* While the page falls apart the terminal stops scrolling and the window hangs by a corner. */
+.is-crashing .screen { overflow: hidden; }
+.is-crashing .win { transform-origin: 0 0; }
+
+.panic {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    padding: max(20px, env(safe-area-inset-top)) clamp(14px, 3vw, 32px) 20px;
+    overflow: hidden;
+    background: #000;
+    color: #c9cfcb;
+    font: 13px/1.55 var(--font-mono);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    cursor: default;
+    user-select: none;
+    transition: opacity 260ms var(--ease-out);
+}
+
+.panic p { margin: 0; }
+.panic .ok { color: var(--bash-green); font-weight: 700; }
+.panic .hint { margin-top: 1.55em; color: #fff; }
+.panic.is-leaving { opacity: 0; }
+
 /* ---------------------------------------------------- view transitions -- */
 
 ::view-transition-old(root),
@@ -419,6 +448,7 @@ body {
     .win { height: 100%; }
     .win.is-max { inset: 8px 8px auto; height: calc(var(--dock-top, 100dvh) - 16px); }
     .screen { padding: 16px; font-size: 13px; line-height: 1.65; }
+    .panic { font-size: 11px; }
     .win-title { display: none; }
 
     .dock { gap: 2px; padding: 8px 6px 6px; margin-inline: 16px; }

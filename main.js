@@ -161,12 +161,13 @@
         return `Last login: ${days[d.getDay()]} ${months[d.getMonth()]} ${String(d.getDate()).padStart(2, " ")} ${time} on ttys000`;
     }
 
-    function startSession() {
+    function startSession(motd) {
         run(async (id) => {
             log.textContent = "";
             log.classList.add("live");
             const last = lastLoginLine();
             if (last) print(el("p", "dim", last)).style.whiteSpace = "pre";
+            if (motd) print(el("p", "dim", motd));
             const { cmd } = echo("");
             await type(cmd, "whoami", CMD_SPEED, id);
             await wait(GAP, id);
@@ -188,7 +189,8 @@
         }
         historyAt = history.length;
 
-        const [word = "", ...args] = line.split(/\s+/);
+        let [word = "", ...args] = line.split(/\s+/);
+        if (word === "sudo" && args.length) [word, ...args] = args; // already root
         const name = ALIASES[word] || word;
 
         switch (name) {
@@ -221,6 +223,14 @@
             case "clear":
                 log.textContent = "";
                 break;
+            case "rm": {
+                if (isRecursiveForce(args)) { meltdown(); return; }
+                const target = args.find((a) => !a.startsWith("-"));
+                print(el("p", "out", target
+                    ? `rm: cannot remove '${target}': No such file or directory`
+                    : "rm: missing operand"));
+                break;
+            }
             case "exit":
                 print(el("p", "dim", "logout"));
                 prompt.hidden = true;
@@ -376,7 +386,7 @@
     });
 
     document.addEventListener("keydown", (e) => {
-        if (state !== "open") return;
+        if (state !== "open" || crashing) return;
         if (e.key === "Escape" && win.classList.contains("is-max")) {
             toggleMax();
             return;
@@ -391,6 +401,208 @@
             input.focus({ preventScroll: true });
         }
     });
+
+    // -------------------------------------------------------------- rm -rf --
+
+    // `rm -rf` takes the page down with it: files scroll by, the desktop falls
+    // apart, the kernel panics, and a reboot puts everything back. Nothing is
+    // really deleted; every animation is cancelled on the way back up.
+
+    const DOOMED = [
+        "/bin/bash", "/bin/ls", "/boot/vmlinuz", "/boot/grub/grub.cfg",
+        "/etc/fstab", "/etc/hostname", "/etc/passwd", "/etc/ssh/sshd_config",
+        "/etc/kubernetes/admin.conf", "/home/berk/.bashrc", "/home/berk/playbooks/site.yml",
+        "/usr/bin/ansible", "/usr/bin/kubectl", "/usr/bin/sudo", "/usr/lib/systemd/systemd",
+        "/usr/share/fonts/JetBrainsMono.woff2", "/var/lib/docker", "/var/log/syslog",
+        "/var/www/berkbal.com/index.html", "/var/www/berkbal.com/style.css",
+        "/var/www/berkbal.com/main.js",
+    ];
+
+    const PANIC = [
+        "[  314.159265] EXT4-fs error (device sda1): ext4_lookup: deleted inode referenced: 2",
+        "[  314.159301] systemd[1]: /usr/lib/systemd/systemd: No such file or directory",
+        "[  314.159342] Kernel panic - not syncing: Attempted to kill init! exitcode=0x00000100",
+        "[  314.159377] CPU: 0 PID: 1 Comm: systemd Not tainted 6.8.0-berkbal #1",
+        "[  314.159409] Call Trace:",
+        "[  314.159431]  <TASK>",
+        "[  314.159452]  dump_stack_lvl+0x48/0x70",
+        "[  314.159474]  panic+0x346/0x380",
+        "[  314.159496]  do_exit+0x9a1/0xa50",
+        "[  314.159518]  do_group_exit+0x35/0x90",
+        "[  314.159540]  __x64_sys_exit_group+0x18/0x20",
+        "[  314.159562]  </TASK>",
+        "[  314.159601] ---[ end Kernel panic - not syncing: Attempted to kill init! ]---",
+    ];
+
+    const BOOT = [
+        "Reached target Reboot.",
+        "Restored / from last night's backup.",
+        "Started berkbal.com.",
+    ];
+
+    const REBOOT_AFTER = 8; // seconds on the panic screen before it reboots by itself
+    const GRAVITY = "cubic-bezier(0.55, 0, 1, 0.45)";
+    const stage = document.querySelector(".stage");
+    const wallpaper = document.querySelector(".desk");
+
+    let crashing = false;
+
+    const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+    const rand = (min, max) => min + Math.random() * (max - min);
+
+    // -rf, -fr, -Rf, "-r -f", --recursive --force
+    function isRecursiveForce(args) {
+        const flags = args.filter((a) => a.startsWith("-"));
+        const short = flags.filter((a) => !a.startsWith("--")).join("");
+        return (/r/i.test(short) || flags.includes("--recursive"))
+            && (short.includes("f") || flags.includes("--force"));
+    }
+
+    // One element lets go and falls out of view.
+    function drop(node, { delay = 0, duration = 800, y, x = 0, spin = 0 }) {
+        return node.animate(
+            [
+                { transform: "translate3d(0, 0, 0) rotate(0deg)" },
+                { transform: `translate3d(${x}px, ${y}px, 0) rotate(${spin}deg)` },
+            ],
+            { delay, duration, easing: GRAVITY, fill: "forwards" },
+        );
+    }
+
+    // Starts every falling animation and returns them, so reboot can cancel them.
+    function collapse() {
+        const view = screen.getBoundingClientRect();
+        const lines = [...log.children].filter((node) => {
+            const box = node.getBoundingClientRect();
+            return box.bottom > view.top && box.top < view.bottom;
+        });
+        const dockParts = [...dock.children];
+        const dockStart = 700;
+        const dockGap = 110;
+
+        return [
+            ...lines.map((node) => drop(node, {
+                delay: rand(0, 450),
+                duration: rand(550, 900),
+                y: view.height + 60,
+                x: rand(-40, 40),
+                spin: rand(-14, 14),
+            })),
+            // The window comes loose at one corner, swings on the other, then lets go.
+            win.animate(
+                [
+                    { transform: "rotate(0deg)", easing: "ease-in-out" },
+                    { transform: "rotate(17deg)", easing: "ease-in-out", offset: 0.16 },
+                    { transform: "rotate(8deg)", easing: "ease-in-out", offset: 0.32 },
+                    { transform: "rotate(14deg)", easing: "ease-in-out", offset: 0.46 },
+                    { transform: "rotate(11deg)", easing: "ease-in-out", offset: 0.58 },
+                    { transform: "rotate(12deg)", easing: GRAVITY, offset: 0.66 },
+                    { transform: `translate3d(0, ${innerHeight + 60}px, 0) rotate(30deg)` },
+                ],
+                { delay: 250, duration: 1700, fill: "forwards" },
+            ),
+            ...dockParts.map((node, i) => drop(node, {
+                delay: dockStart + i * dockGap,
+                duration: 700,
+                y: innerHeight * 0.6,
+                x: rand(-30, 30),
+                spin: rand(-55, 55),
+            })),
+            drop(dock, {
+                delay: dockStart + dockParts.length * dockGap,
+                duration: 650,
+                y: innerHeight * 0.6,
+                spin: rand(-8, 8),
+            }),
+            wallpaper.animate(
+                [{ opacity: 1 }, { opacity: 0 }],
+                { delay: 1500, duration: 600, fill: "forwards" },
+            ),
+        ];
+    }
+
+    // Resolves on the first key or tap, or when the countdown runs out.
+    function rebootRequested(counter) {
+        return new Promise((resolve) => {
+            let left = REBOOT_AFTER;
+            const finish = () => {
+                clearInterval(timer);
+                removeEventListener("keydown", onKey, true);
+                removeEventListener("pointerdown", finish, true);
+                resolve();
+            };
+            const onKey = (e) => {
+                if (!["Shift", "Control", "Alt", "Meta"].includes(e.key)) finish();
+            };
+            const timer = setInterval(() => {
+                left -= 1;
+                counter.textContent = left;
+                if (left <= 0) finish();
+            }, 1000);
+            addEventListener("keydown", onKey, true);
+            addEventListener("pointerdown", finish, true);
+        });
+    }
+
+    async function meltdown() {
+        const calm = reduced.matches; // no falling, no flicker: straight to the panic screen
+        session++;
+        busy = true;
+        crashing = true;
+        prompt.hidden = true;
+        log.setAttribute("aria-busy", "true");
+        stage.inert = true;
+        dock.inert = true;
+        document.documentElement.classList.add("is-crashing");
+
+        for (let i = 0; i < DOOMED.length; i++) {
+            print(el("p", "out rm-line", `removed '${DOOMED[i]}'`));
+            if (!calm) await sleep(Math.max(20, 90 - i * 4)); // picks up speed
+        }
+
+        let falling = [];
+        if (!calm) {
+            await sleep(350);
+            falling = collapse();
+            await Promise.all(falling.map((a) => a.finished.catch(() => {})));
+        }
+
+        const panic = el("div", "panic");
+        panic.setAttribute("role", "alert");
+        document.body.append(panic);
+        if (!calm) await sleep(500); // a dead screen, for a moment
+        for (const text of PANIC) {
+            panic.append(el("p", null, text));
+            if (!calm) await sleep(45);
+        }
+
+        const hint = el("p", "hint");
+        const counter = el("span", null, String(REBOOT_AFTER));
+        hint.append("Rebooting in ", counter, `s. ${finePointer ? "Press any key" : "Tap"} to reboot now.`);
+        panic.append(hint);
+        await rebootRequested(counter);
+
+        panic.textContent = "";
+        for (const text of BOOT) {
+            const line = el("p");
+            line.append("[  ", el("span", "ok", "OK"), `  ] ${text}`);
+            panic.append(line);
+            if (!calm) await sleep(280);
+        }
+        await sleep(calm ? 900 : 400);
+
+        // Put the desktop back behind the panic screen, then lift the screen.
+        for (const a of falling) a.cancel();
+        document.documentElement.classList.remove("is-crashing");
+        stage.inert = false;
+        dock.inert = false;
+        log.textContent = "";
+        panic.classList.add("is-leaving");
+        await sleep(260);
+        panic.remove();
+        crashing = false;
+        startSession("System restored from backup. Nice try.");
+    }
 
     // ---------------------------------------------------- pointer depth --
 
