@@ -6,7 +6,7 @@ metadata:
   labels:
     app: berkbal-static
 spec:
-  replicas: 1
+  # replicas yok: sayiyi infra/hpa.yaml yonetir (Argo ile cakismasin).
   revisionHistoryLimit: 3
   selector:
     matchLabels:
